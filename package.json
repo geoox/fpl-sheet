@@ -1,0 +1,23 @@
+{
+  "name": "fpl-sheet",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/geoox/fpl-sheet.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/geoox/fpl-sheet/issues"
+  },
+  "homepage": "https://github.com/geoox/fpl-sheet#readme",
+  "dependencies": {
+    "axios": "^1.1.3",
+    "exceljs": "^4.3.0"
+  }
+}
