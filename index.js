@@ -113,6 +113,7 @@ updateFixtures = async (ws, bootstrap_obj) => {
 }
 
 mapPlayers = async (fixtures, playersIdArr, bootstrap_obj, ws) => {
+    // maps player picks to correct player & fixture
     for await (var [fixture_i, fixture] of fixtures.entries()) {
         for await (var [fraier_i, player] of playersIdArr.entries()) {
             const picks = await getPick(player.id);
