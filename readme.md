@@ -1,8 +1,11 @@
 # How to use:
-1. Open index.js, line 4, edit GAMEWEEK global variable.
-e.g. const GAMEWEEK = 16
-2. Run the script.
-- `node index.js`
+1. Clone repo
+2. Install dependencies:
+`npm i`
+3. Open index.js, line 4, edit GAMEWEEK global variable:
+`const GAMEWEEK = 16`
+4. Run the script:
+`node index.js`
 
 An xlsx file will get created with the following rules:
 - First column contains player names
@@ -10,6 +13,9 @@ An xlsx file will get created with the following rules:
 - Each player pick will get assigned to the correct player & fixture
 - Players with green background are captains
 - Players with red background are on the bench
+
+<img width="1036" alt="image" src="https://user-images.githubusercontent.com/24357659/209521843-b2434a49-160d-4901-a7b9-e655fd520048.png">
+
 
 # Improvements:
 - Remove empty columns in player picks - where the max amount of players > max possible players per fixture
