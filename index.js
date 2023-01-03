@@ -1,7 +1,7 @@
 const ExcelJS = require('exceljs');
 const axios = require('axios');
 
-const GAMEWEEK = 16
+const GAMEWEEK = 17
 const LEAGUE_INFO_URL = 'https://fantasy.premierleague.com/api/leagues-classic/4276/standings'
 const FIXTURES_URL = `https://fantasy.premierleague.com/api/fixtures?event=${GAMEWEEK}`
 const BOOTSTRAP_URL = 'https://fantasy.premierleague.com/api/bootstrap-static/'
@@ -154,6 +154,26 @@ mapPlayers = async (fixtures, playersIdArr, bootstrap_obj, ws) => {
     return new Promise((res, rej) => res(ws));
 }
 
+removeBlankColumns = async (ws) => {
+    // beautify the excel
+    var columnC = ws.columnCount;
+    var rowC = ws.rowCount;
+    for(var col = 5; col<=columnC; col++){
+        var isColEmpty = true;
+        for(var row = 2; row<=rowC; row++){
+            var cell = ws.getCell(row,col);
+            if(cell.value !== null){
+                isColEmpty = false;
+            }
+        }
+        if(isColEmpty){
+            // hide blank column
+            var column = ws.getColumn(col);
+            column.hidden = true;
+        }
+    }
+    return new Promise((res, rej) => res(ws));
+}
 
 main = async () => {
 
@@ -164,6 +184,8 @@ main = async () => {
     const fixtures = await updateFixtures(ws, bootstrap_obj);
     
     await mapPlayers(fixtures, playersIdArr, bootstrap_obj, ws);
+    await removeBlankColumns(ws);
+
     await workbook.xlsx.writeFile(`gw_${GAMEWEEK}.xlsx`);
 
 };
