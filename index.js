@@ -1,7 +1,7 @@
 const ExcelJS = require('exceljs');
 const axios = require('axios');
 
-const GAMEWEEK = 17
+const GAMEWEEK = 19
 const LEAGUE_INFO_URL = 'https://fantasy.premierleague.com/api/leagues-classic/4276/standings'
 const FIXTURES_URL = `https://fantasy.premierleague.com/api/fixtures?event=${GAMEWEEK}`
 const BOOTSTRAP_URL = 'https://fantasy.premierleague.com/api/bootstrap-static/'
@@ -102,7 +102,7 @@ updateFixtures = async (ws, bootstrap_obj) => {
                 `${team_h} - ${team_a}`
             ]);
 
-            startC+=6;
+            startC += 6;
         };
 
         return new Promise((res, rej) => res(fixtures));
@@ -123,27 +123,27 @@ mapPlayers = async (fixtures, playersIdArr, bootstrap_obj, ws) => {
                 const player = getPlayerName(bootstrap_obj, pick.element)
                 if (team === fixture.team_h || team === fixture.team_a) {
                     console.log(player);
-                    var row = fraier_i+2;
-                    var column = 4 + 6*(fixture_i)+1;
+                    var row = fraier_i + 2;
+                    var column = 4 + 6 * (fixture_i) + 1;
                     var cell = ws.getCell(row, column);
-                    while(cell.value !== null){
+                    while (cell.value !== null) {
                         // there is a player from the same team, move to next cell
                         column++;
                         cell = ws.getCell(row, column);
-                    } 
+                    }
                     ws.getCell(row, column).value = player;
-                    if(pick.is_captain) {
+                    if (pick.is_captain) {
                         ws.getCell(row, column).fill = {
                             type: 'pattern',
-                            pattern:'solid',
-                            fgColor:{argb:'D0F0C0'},
+                            pattern: 'solid',
+                            fgColor: { argb: 'D0F0C0' },
                         };
                     }
-                    if(pick.position >=12){
+                    if (pick.position >= 12) {
                         ws.getCell(row, column).fill = {
                             type: 'pattern',
-                            pattern:'solid',
-                            fgColor:{argb:'F08080'},
+                            pattern: 'solid',
+                            fgColor: { argb: 'F08080' },
                         };
                     }
                     column++;
@@ -158,20 +158,26 @@ removeBlankColumns = async (ws) => {
     // beautify the excel
     var columnC = ws.columnCount;
     var rowC = ws.rowCount;
-    for(var col = 5; col<=columnC; col++){
+    for (var col = 5; col <= columnC; col++) {
         var isColEmpty = true;
-        for(var row = 2; row<=rowC; row++){
-            var cell = ws.getCell(row,col);
-            if(cell.value !== null){
+        for (var row = 2; row <= rowC; row++) {
+            var cell = ws.getCell(row, col);
+            if (cell.value !== null) {
                 isColEmpty = false;
             }
         }
-        if(isColEmpty){
+        if (isColEmpty) {
             // hide blank column
             var column = ws.getColumn(col);
             column.hidden = true;
         }
     }
+
+    // center contents of first row
+    for (var i = 5; i < ws.columnCount; i++) {
+        ws.getCell(1, i).alignment = { vertical: 'middle', horizontal: 'center' };
+    }
+
     return new Promise((res, rej) => res(ws));
 }
 
@@ -182,7 +188,7 @@ main = async () => {
 
     const playersIdArr = await updateLeagueInfo(ws);
     const fixtures = await updateFixtures(ws, bootstrap_obj);
-    
+
     await mapPlayers(fixtures, playersIdArr, bootstrap_obj, ws);
     await removeBlankColumns(ws);
 
