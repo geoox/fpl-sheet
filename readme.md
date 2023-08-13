@@ -18,8 +18,9 @@ An xlsx file will get created with the following rules:
 # Improvements:
 - ~Remove empty columns in player picks - where the max amount of players > max possible players per fixture~ ☑️
 - ~Compute & color differentials~ ☑️
-- Create gameweek argument for the script
-- Improve code performance :D
+- ~Create gameweek argument for the script~ ☑️
+- ~Improve code performance :D~ ☑️
+- Logic for aligning picks in gameweeks based on frequency
 
 ### Old:
 <img width="1036" alt="image" src="https://user-images.githubusercontent.com/24357659/209521843-b2434a49-160d-4901-a7b9-e655fd520048.png">
