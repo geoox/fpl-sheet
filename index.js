@@ -8,8 +8,7 @@ initWs = (GAMEWEEK) => {
     ws.columns = [
         { header: 'Fraier', key: 'fraier' },
         { header: 'OVR', key: 'ovr' },
-        { header: 'GW', key: 'gw' },
-        { header: 'To play', key: 'toPlay' }
+        { header: 'GW', key: 'gw' }
     ];
 
     return { workbook, ws };
@@ -62,7 +61,7 @@ updateLeagueInfo = async (ws, LEAGUE_INFO_URL) => {
         const standingsArr = response.data.standings.results;
         var playersIdArr = []
         standingsArr.forEach(item => {
-            ws.addRow([item.player_name, item.total, 0, 11]);
+            ws.addRow([item.player_name, item.total, 0]);
             playersIdArr.push({
                 'id': item.entry,
                 'name': item.player_name,
