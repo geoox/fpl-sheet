@@ -9,9 +9,7 @@ An xlsx file will get created with the following rules:
 - First column contains player names
 - First row contains fixtures based on specified gameweek
 - Each player pick will get assigned to the correct player & fixture
-- Players with green background are captains
-- Players with red background are on the bench
-
+- Cells colors are decided based on how differential the picks are (diff 1 = the pick was chosen by only 1 manager)
 
 # Improvements:
 - ~Remove empty columns in player picks - where the max amount of players > max possible players per fixture~ ☑️
