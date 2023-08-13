@@ -18,8 +18,6 @@ An xlsx file will get created with the following rules:
 - ~Improve code performance :D~ ☑️
 - Logic for aligning picks in gameweeks based on frequency
 
-### Old:
-<img width="1036" alt="image" src="https://user-images.githubusercontent.com/24357659/209521843-b2434a49-160d-4901-a7b9-e655fd520048.png">
+# Preview:
+<img width="1159" alt="image" src="https://github.com/geoox/fpl-sheet/assets/24357659/a2698676-4329-4ba9-b428-110206979d78">
 
-### Updated:
-<img width="885" alt="image" src="https://user-images.githubusercontent.com/24357659/210437286-47b1c3fa-097f-4be8-a3e6-e399291b342e.png">
