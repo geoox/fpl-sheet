@@ -2,10 +2,8 @@
 1. Clone repo
 2. Install dependencies:
 `npm i`
-3. Open index.js, line 4, edit GAMEWEEK global variable:
-`const GAMEWEEK = 16`
-4. Run the script:
-`node index.js`
+3. Run the script, it takes as argument the gameweek:
+`node index.js 1` for gameweek 1
 
 An xlsx file will get created with the following rules:
 - First column contains player names
