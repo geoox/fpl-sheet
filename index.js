@@ -1,14 +1,7 @@
 const ExcelJS = require('exceljs');
 const axios = require('axios');
 
-const GAMEWEEK = 19
-const LEAGUE_INFO_URL = 'https://fantasy.premierleague.com/api/leagues-classic/4276/standings'
-const FIXTURES_URL = `https://fantasy.premierleague.com/api/fixtures?event=${GAMEWEEK}`
-const BOOTSTRAP_URL = 'https://fantasy.premierleague.com/api/bootstrap-static/'
-const PICKS_URL = `https://fantasy.premierleague.com/api/entry/PLAYER_ID/event/${GAMEWEEK}/picks/`
-
-
-initWs = () => {
+initWs = (GAMEWEEK) => {
     const workbook = new ExcelJS.Workbook();
     const ws = workbook.addWorksheet(`GW${GAMEWEEK}`);
 
@@ -22,7 +15,7 @@ initWs = () => {
     return { workbook, ws };
 }
 
-getBoostrap = async () => {
+getBoostrap = async (BOOTSTRAP_URL) => {
     // bootstrap = static data with several details about teams/players
     try {
         const response = await axios.get(BOOTSTRAP_URL);
@@ -51,7 +44,7 @@ getPlayerTeam = (bootstrap_obj, player_id) => {
     return player[0].team;
 }
 
-getPick = async (player_id) => {
+getPick = async (player_id, PICKS_URL) => {
     // get picks (15 players) for each player
     try {
         const response = await axios.get(PICKS_URL.replace('PLAYER_ID', player_id));
@@ -61,7 +54,7 @@ getPick = async (player_id) => {
     }
 }
 
-updateLeagueInfo = async (ws) => {
+updateLeagueInfo = async (ws, LEAGUE_INFO_URL) => {
     // fill in players & legend
     try {
         const response = await axios.get(LEAGUE_INFO_URL);
@@ -78,7 +71,7 @@ updateLeagueInfo = async (ws) => {
         });
 
         const legendRow1 = ['Captain', 'Benched', 'Diff 1', 'Diff 2-3']
-        const legendRow2 = ['Diff 4-5', 'Diff 6', 'Diff 7+']
+        const legendRow2 = ['Diff 4-5', 'Diff 6-7', 'Diff 8+']
         ws.addRow([]);
         ws.addRow(legendRow1);
         ws.getCell(ws.rowCount, 1).fill = {
@@ -86,11 +79,11 @@ updateLeagueInfo = async (ws) => {
             pattern:'solid',
             fgColor:{ argb:'D0F0C0' }
         }
-        ws.getCell(ws.rowCount, 2).fill = {
-            type: 'pattern',
-            pattern:'solid',
-            fgColor:{ argb:'F08080' }
-        }
+        // ws.getCell(ws.rowCount, 2).fill = {
+        //     type: 'pattern',
+        //     pattern:'solid',
+        //     fgColor:{ argb:'F08080' }
+        // }
         ws.getCell(ws.rowCount, 3).fill = {
             type: 'pattern',
             pattern:'solid',
@@ -126,7 +119,7 @@ updateLeagueInfo = async (ws) => {
     }
 }
 
-updateFixtures = async (ws, bootstrap_obj) => {
+updateFixtures = async (ws, bootstrap_obj, FIXTURES_URL) => {
     // fill in fixtures
     try {
         const response = await axios.get(FIXTURES_URL);
@@ -156,17 +149,19 @@ updateFixtures = async (ws, bootstrap_obj) => {
     }
 }
 
-mapPlayers = async (fixtures, playersIdArr, bootstrap_obj, ws) => {
+mapPlayers = async (fixtures, playersIdArr, bootstrap_obj, ws, PICKS_URL) => {
     // maps player picks to correct player & fixture
     var allPlayers = [];
     // { name: .. , count: .. }
     for await (var [fixture_i, fixture] of fixtures.entries()) {
         for await (var [fraier_i, player] of playersIdArr.entries()) {
-            const picks = await getPick(player.id);
+            const picks = await getPick(player.id, PICKS_URL);
+            // aici avem toate pickurile unui jucator pentru un fixture
             console.log(`\nPicks for -${player.name}: - for fixture ${getTeamName(bootstrap_obj, fixture.team_h)} - ${getTeamName(bootstrap_obj, fixture.team_a)}:`);
             for await (var pick of picks) {
                 const team = getPlayerTeam(bootstrap_obj, pick.element);
-                const player = getPlayerName(bootstrap_obj, pick.element)
+                const player = getPlayerName(bootstrap_obj, pick.element);
+                if(player)
                 if (team === fixture.team_h || team === fixture.team_a) {
                     console.log(player);
                     allPlayers.push(player);
@@ -187,10 +182,17 @@ mapPlayers = async (fixtures, playersIdArr, bootstrap_obj, ws) => {
                         };
                     }
                     if (pick.position >= 12) {
+                        // benched
                         ws.getCell(row, column).fill = {
                             type: 'pattern',
                             pattern: 'solid',
-                            fgColor: { argb: 'F08080' },
+                            fgColor: { argb: 'FFFFFF' },
+                        };
+                        ws.getCell(row, column).border = {
+                            top: {style:'thin', color: {argb:'e1e1e1'}},
+                            left: {style:'thin', color: {argb:'e1e1e1'}},
+                            bottom: {style:'thin', color: {argb:'e1e1e1'}},
+                            right: {style:'thin', color: {argb:'e1e1e1'}}
                         };
                     }
                     column++;
@@ -204,9 +206,56 @@ mapPlayers = async (fixtures, playersIdArr, bootstrap_obj, ws) => {
         else ++acc[acc.findIndex(f => f.item === curr)].count
         return acc
     }, []);
-    console.log('playersCount', playersCount);
+    computeStatistics(playersCount);
     return new Promise((res, rej) => res(playersCount));
 }
+
+computeStatistics = async (playersCount) => {
+    console.log('\nThese are the picks: \n');
+    playersCount.sort((a, b) => b.count - a.count);
+    console.log(playersCount);
+
+    console.log('\n👉 Most common picks: \n');
+    const top5 = playersCount.slice(0, 5);
+    console.log(top5);
+
+    console.log('\n👀 Differentials: \n');
+    playersCount.sort((a, b) => a.count - b.count);
+    const top10 = playersCount.slice(0, 10);
+    console.log(top10);
+}
+
+computeTopPicks = async (playersIdArr, bootstrap_obj, PICKS_URL) => {
+    console.log('\n ⌛ Computing most common picks...');
+    
+    const topPicksMap = new Map();
+
+    const fetchPickPromises = playersIdArr.map(async (player) => {
+        const picks = await getPick(player.id, PICKS_URL);
+        return { player, picks };
+    });
+
+    const allPlayerPicks = await Promise.all(fetchPickPromises);
+
+    for (const { picks } of allPlayerPicks) {
+        for (const pick of picks) {
+            const playerName = getPlayerName(bootstrap_obj, pick.element);
+            topPicksMap.set(playerName, (topPicksMap.get(playerName) || 0) + 1);
+        }
+    }
+
+    const sortedMap = new Map([...topPicksMap.entries()].sort((a, b) => b[1] - a[1]));
+
+    console.log('\n✅ Done computing most common picks!');
+
+    const top3Picks = Array.from(sortedMap).slice(0, 3);
+    console.log('\n\nMost common picked players for this gameweek are: ');
+
+    top3Picks.forEach(([pick, count]) => console.log(`\n ${pick} - ${count} picks`));
+
+    return top3Picks;
+};
+
 
 beautifySheet = async (ws, playersCount) => {
     // hide blank columns
@@ -230,6 +279,15 @@ beautifySheet = async (ws, playersCount) => {
     for (var i = 5; i < ws.columnCount; i++) {
         ws.getCell(1, i).alignment = { vertical: 'middle', horizontal: 'center' };
     }
+
+    // TODO: reorder based on frequency
+    
+    // for (var col = 5; col <= columnC; col++) {
+    //     for (var row = 2; row <= rowC; row++) {
+    //         var cell = ws.getCell(row, col);
+    //         player = playersCount.find(player => player.item === cell.value);
+    //     }
+    // }
 
     // color differentials
     for (var col = 5; col <= columnC; col++) {
@@ -255,13 +313,13 @@ beautifySheet = async (ws, playersCount) => {
                     pattern: 'solid',
                     fgColor: { argb: '52B2BF' },
                 };
-            }else if(player.count === 6 && cell.fill === undefined){
+            }else if(player.count>=6 && player.count <= 7 && cell.fill === undefined){
                 cell.fill = {
                     type: 'pattern',
                     pattern: 'solid',
                     fgColor: { argb: '3944BC' },
                 };
-            } else if(player.count >= 7 && cell.fill === undefined){
+            } else if(player.count >= 8 && cell.fill === undefined){
                 cell.fill = {
                     type: 'pattern',
                     pattern: 'solid',
@@ -276,17 +334,29 @@ beautifySheet = async (ws, playersCount) => {
 
 main = async () => {
 
-    var { workbook, ws } = initWs();
-    var bootstrap_obj = await getBoostrap();
+    const args = process.argv.slice(2); // Command-line arguments
+    if (args.length !== 1) {
+        console.error('Usage: node index.js <Gameweek>');
+        return;
+    }
+    const GAMEWEEK = args[0]
+    const euroGamingPanini2024id = 24874 
+    const LEAGUE_INFO_URL = `https://fantasy.premierleague.com/api/leagues-classic/${euroGamingPanini2024id}/standings`
+    const FIXTURES_URL = `https://fantasy.premierleague.com/api/fixtures?event=${GAMEWEEK}`
+    const BOOTSTRAP_URL = 'https://fantasy.premierleague.com/api/bootstrap-static/'
+    const PICKS_URL = `https://fantasy.premierleague.com/api/entry/PLAYER_ID/event/${GAMEWEEK}/picks/`
 
-    const playersIdArr = await updateLeagueInfo(ws);
-    const fixtures = await updateFixtures(ws, bootstrap_obj);
+    var { workbook, ws } = initWs(GAMEWEEK);
+    var bootstrap_obj = await getBoostrap(BOOTSTRAP_URL);
 
-    const playersCount = await mapPlayers(fixtures, playersIdArr, bootstrap_obj, ws);
+    const playersIdArr = await updateLeagueInfo(ws, LEAGUE_INFO_URL);
+    const fixtures = await updateFixtures(ws, bootstrap_obj, FIXTURES_URL);
+
+    const playersCount = await mapPlayers(fixtures, playersIdArr, bootstrap_obj, ws, PICKS_URL);
     await beautifySheet(ws, playersCount);
 
     await workbook.xlsx.writeFile(`gw_${GAMEWEEK}.xlsx`);
-
+    console.log('✅ Done! Scroll up for statistics 👆')
 };
 
 main();
